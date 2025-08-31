@@ -26,7 +26,7 @@ import os
 import time
 import curses
 
-ASCII_CHARS = ["@", "%", "#", "*", "+", "=", "-", ":", ".", " "]
+ASCII_CHARS = ["@","%", "#", "*", "+", "=", "-", ":", ".", " "]
 
 def select_video_file(folder):
     files = [f for f in os.listdir(folder) if f.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.wmv'))]
@@ -136,14 +136,12 @@ def image_to_ascii(path, new_width=100):
     return ascii_img
 
 def frame_to_ascii(frame, new_width=100):
-    # Convert OpenCV frame (BGR) to grayscale
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    # Increase contrast to maximum
-    alpha = 2.0  # Contrast control (1.0-3.0+)
-    beta = 0     # Brightness control (0-100)
+    alpha = 2.0
+    beta = 0
     high_contrast = cv2.convertScaleAbs(gray, alpha=alpha, beta=beta)
-    # Convert to PIL Image
-    image = Image.fromarray(high_contrast)
+    inverted = cv2.bitwise_not(high_contrast)
+    image = Image.fromarray(inverted)
     width, height = image.size
     aspect_ratio = height / width
     new_height = int(aspect_ratio * new_width)
@@ -215,4 +213,4 @@ if __name__ == "__main__":
     video_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "video")
     video_path = select_video_file(video_folder)
     if video_path:
-        video_to_ascii(os.path.join(video_folder, video_path), new_width=80, fps_limit=30)
+        video_to_ascii(os.path.join(video_folder, video_path), new_width=90, fps_limit=30)
