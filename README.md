@@ -25,13 +25,39 @@ A terminal-based Python application that converts videos to ASCII art and plays 
 - **frame_to_ascii**: Converts a single video frame to ASCII art.
 - Uses OpenCV for video, Pillow for image processing, and simpleaudio for audio.
 
+
 ## Requirements
 - Python 3.10+
-- [OpenCV](https://pypi.org/project/opencv-python/)
-- [Pillow](https://pypi.org/project/Pillow/)
-- [simpleaudio](https://pypi.org/project/simpleaudio/)
-- [windows-curses](https://pypi.org/project/windows-curses/) (Windows only)
+- All Python dependencies are listed in `requirements.txt`:
+   - opencv-python
+   - Pillow
+   - simpleaudio
+   - windows-curses (Windows only)
+   - ffmpeg-python
 - [ffmpeg](https://ffmpeg.org/) (must be installed and in PATH)
+
+## Configuration Tutorial
+
+1. **Install Python dependencies:**
+   ```
+   pip install -r requirements.txt
+   ```
+
+2. **Install ffmpeg:**
+   - Download from [ffmpeg.org](https://ffmpeg.org/download.html) and follow platform instructions.
+   - Add ffmpeg to your system PATH so it can be called from the terminal.
+
+3. **Prepare your videos:**
+   - Place your video files (`.mp4`, `.avi`, `.mov`, `.mkv`, `.wmv`) in the `video` folder next to `main.py`.
+
+4. **Run the program:**
+   ```
+   python main.py
+   ```
+
+5. **Usage:**
+   - Use arrow keys to select a video, Enter to play, 'q' to quit.
+   - ASCII art and audio will play in your terminal.
 
 ## Credits
 - Author: ushanrashmika =23
