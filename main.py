@@ -30,9 +30,6 @@ ASCII_CHARS = ["@", "%", "#", "*", "+", "=", "-", ":", ".", " "]
 
 def select_video_file(folder):
     files = [f for f in os.listdir(folder) if f.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.wmv'))]
-    if not files:
-        print("No video files found in folder.")
-        return None
     def curses_menu(stdscr):
         curses.curs_set(0)
         curses.start_color()
@@ -81,27 +78,33 @@ def select_video_file(folder):
             # Video list title
             video_list_y = box_y+1+len(instructions)+len(credits_box)
             stdscr.addstr(video_list_y, box_x+2, "Video list:", curses.color_pair(2) | curses.A_BOLD)
-            # File list
-            for idx, fname in enumerate(files):
-                line_y = video_list_y+1+idx
-                if line_y >= box_y+box_height-2:
-                    break
-                if idx == selected:
-                    stdscr.addstr(line_y, box_x+4, "> " + fname, curses.color_pair(1) | curses.A_REVERSE | curses.A_BOLD)
-                else:
-                    stdscr.addstr(line_y, box_x+6, fname)
+            # File list or no files message
+            if files:
+                for idx, fname in enumerate(files):
+                    line_y = video_list_y+1+idx
+                    if line_y >= box_y+box_height-2:
+                        break
+                    name, ext = os.path.splitext(fname)
+                    display_name = (name[:35] + '...' if len(name) > 35 else name) + ext
+                    if idx == selected:
+                        stdscr.addstr(line_y, box_x+4, "> " + display_name, curses.color_pair(1) | curses.A_REVERSE | curses.A_BOLD)
+                    else:
+                        stdscr.addstr(line_y, box_x+6, display_name)
+            else:
+                stdscr.addstr(video_list_y+2, box_x+4, "No video files found in folder.", curses.color_pair(3) | curses.A_BOLD)
             # Footer
             stdscr.addstr(box_y+box_height-2, box_x+2, "Press 'q' to exit.", curses.color_pair(3) | curses.A_BOLD)
             key = stdscr.getch()
-            if key == curses.KEY_UP and selected > 0:
-                selected -= 1
-            elif key == curses.KEY_DOWN and selected < len(files)-1:
-                selected += 1
-            elif key in [curses.KEY_ENTER, 10, 13]:
-                return files[selected]
-            elif key in [ord('q'), ord('Q')]:
+            if files:
+                if key == curses.KEY_UP and selected > 0:
+                    selected -= 1
+                elif key == curses.KEY_DOWN and selected < len(files)-1:
+                    selected += 1
+                elif key in [curses.KEY_ENTER, 10, 13]:
+                    return files[selected]
+            if key in [ord('q'), ord('Q')]:
                 return None
-        return curses.wrapper(curses_menu)
+    return curses.wrapper(curses_menu)
 
 def resize_image(image, new_width=100):
     width, height = image.size
@@ -212,4 +215,4 @@ if __name__ == "__main__":
     video_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "video")
     video_path = select_video_file(video_folder)
     if video_path:
-        video_to_ascii(os.path.join(video_folder, video_path), new_width=100, fps_limit=30)
+        video_to_ascii(os.path.join(video_folder, video_path), new_width=80, fps_limit=30)
