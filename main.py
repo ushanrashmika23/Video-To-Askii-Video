@@ -1,4 +1,22 @@
 
+"""
+ASCII Video Player - Program Flow & Architecture
+
+1. User launches the program.
+2. Terminal UI (curses) displays a styled video selector:
+    - Instructions, credits, and a list of video files from the 'video' folder.
+    - User navigates with arrow keys, selects with Enter, or exits with 'q'.
+3. Upon selection, the chosen video is played as ASCII art in the terminal:
+    - Frames are converted to ASCII and displayed.
+    - Audio is extracted and played in sync using simpleaudio.
+    - User can quit playback at any time by pressing 'q'.
+
+Key Components:
+- select_video_file: Handles the curses-based UI for video selection.
+- video_to_ascii: Converts video frames to ASCII and manages audio playback.
+- frame_to_ascii: Converts a single video frame to ASCII art.
+- Uses OpenCV for video, Pillow for image processing, simpleaudio for audio.
+"""
 import threading
 import simpleaudio as sa
 import simpleaudio as sa
@@ -83,7 +101,7 @@ def select_video_file(folder):
                 return files[selected]
             elif key in [ord('q'), ord('Q')]:
                 return None
-    return curses.wrapper(curses_menu)
+        return curses.wrapper(curses_menu)
 
 def resize_image(image, new_width=100):
     width, height = image.size
@@ -189,7 +207,7 @@ def video_to_ascii(video_path, new_width=100, fps_limit=30):
         if os.path.exists(audio_path):
             os.remove(audio_path)
 
-# Example usage
+# Usage
 if __name__ == "__main__":
     video_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "video")
     video_path = select_video_file(video_folder)
