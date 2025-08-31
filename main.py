@@ -1,11 +1,74 @@
+
 import threading
-from playsound import playsound
+import simpleaudio as sa
+import simpleaudio as sa
 from PIL import Image
 import cv2
 import os
 import time
+import curses
 
 ASCII_CHARS = ["@", "%", "#", "*", "+", "=", "-", ":", ".", " "]
+
+def select_video_file(folder):
+    files = [f for f in os.listdir(folder) if f.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.wmv'))]
+    if not files:
+        print("No video files found in folder.")
+        return None
+    def curses_menu(stdscr):
+        curses.curs_set(0)
+        curses.start_color()
+        curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_CYAN)
+        curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+        curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
+        selected = 0
+        instructions = [
+            "[ ASCII Video Player - Metasploit Style UI ]",
+            "─────────────────────────────────────────────",
+            "Instructions:",
+            "  ↑/↓ : Move selection",
+            "  Enter: Play selected video",
+            "  q    : Quit selector (or exit during playback)",
+            "─────────────────────────────────────────────",
+            "Place your videos in the 'video' folder near the main.py.",
+            ""
+        ]
+        while True:
+            stdscr.clear()
+            height, width = stdscr.getmaxyx()
+            box_width = min(70, width-4)
+            box_height = min(len(files)+len(instructions)+6, height-4)
+            box_y = (height - box_height) // 2
+            box_x = (width - box_width) // 2
+            # Draw ASCII box border
+            stdscr.addstr(box_y, box_x, "┌" + "─"*(box_width-2) + "┐", curses.color_pair(2) | curses.A_BOLD)
+            for i in range(1, box_height-1):
+                stdscr.addstr(box_y+i, box_x, "│" + " "*(box_width-2) + "│", curses.color_pair(2))
+            stdscr.addstr(box_y+box_height-1, box_x, "└" + "─"*(box_width-2) + "┘", curses.color_pair(2) | curses.A_BOLD)
+            # Title and instructions
+            for idx, line in enumerate(instructions):
+                stdscr.addstr(box_y+1+idx, box_x+2, line, curses.color_pair(2) | curses.A_BOLD if idx==0 else curses.A_DIM)
+            # File list
+            for idx, fname in enumerate(files):
+                line_y = box_y+len(instructions)+2+idx
+                if line_y >= box_y+box_height-2:
+                    break
+                if idx == selected:
+                    stdscr.addstr(line_y, box_x+4, "> " + fname, curses.color_pair(1) | curses.A_REVERSE | curses.A_BOLD)
+                else:
+                    stdscr.addstr(line_y, box_x+6, fname)
+            # Footer
+            stdscr.addstr(box_y+box_height-2, box_x+2, "Press 'q' to exit.", curses.color_pair(3) | curses.A_BOLD)
+            key = stdscr.getch()
+            if key == curses.KEY_UP and selected > 0:
+                selected -= 1
+            elif key == curses.KEY_DOWN and selected < len(files)-1:
+                selected += 1
+            elif key in [curses.KEY_ENTER, 10, 13]:
+                return files[selected]
+            elif key in [ord('q'), ord('Q')]:
+                return None
+    return curses.wrapper(curses_menu)
 
 def resize_image(image, new_width=100):
     width, height = image.size
@@ -55,16 +118,28 @@ def frame_to_ascii(frame, new_width=100):
     return ascii_img
 
 def video_to_ascii(video_path, new_width=100, fps_limit=30):
-    # Extract audio from video using ffmpeg
+    # --- AUDIO EXTRACTION AND PLAYBACK ---
+    # Extract audio from video using ffmpeg (WAV format for compatibility)
     audio_path = "_temp_audio.wav"
-    # Always extract audio to ensure it's up to date
-    os.system(f'ffmpeg -y -i "{video_path}" -vn -acodec pcm_s16le -ar 44100 -ac 2 "{audio_path}"')
+    extract_cmd = f'ffmpeg -y -i "{video_path}" -vn -acodec pcm_s16le -ar 44100 -ac 2 "{audio_path}"'
+    os.system(extract_cmd)
 
-    # Play sound in a separate thread
+    # Play audio in a separate thread using simpleaudio
+    stop_audio_event = threading.Event()
     def play_audio():
-        playsound(audio_path)
+        try:
+            wave_obj = sa.WaveObject.from_wave_file(audio_path)
+            play_obj = wave_obj.play()
+            while play_obj.is_playing():
+                if stop_audio_event.is_set():
+                    play_obj.stop()
+                    break
+                time.sleep(0.05)
+        except Exception as e:
+            print(f"Audio playback error: {e}")
 
     audio_thread = threading.Thread(target=play_audio)
+    audio_thread.daemon = True  # Ensure thread exits with main program
     audio_thread.start()
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -73,26 +148,40 @@ def video_to_ascii(video_path, new_width=100, fps_limit=30):
             os.remove(audio_path)
         return
         return
+    import msvcrt
     try:
         while True:
             ret, frame = cap.read()
             if not ret:
                 break
-            cv2.imshow('Video Preview (Original)', frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
             ascii_art = frame_to_ascii(frame, new_width)
             os.system('cls' if os.name == 'nt' else 'clear')
-            print(ascii_art)
+            # Add a 3-line exit banner at the bottom
+            ascii_lines = ascii_art.split('\n')
+            banner_width = new_width * 2
+            exit_banner = [
+                "=" * banner_width,
+                "||   PRESS 'q' TO EXIT PLAYBACK   ||".center(banner_width),
+                "=" * banner_width
+            ]
+            print("\n".join(ascii_lines + exit_banner))
+            # Check for 'q' key press to exit
+            if msvcrt.kbhit():
+                key = msvcrt.getch()
+                if key in [b'q', b'Q']:
+                    print("Exiting...")
+                    stop_audio_event.set()
+                    break
             time.sleep(1.0 / fps_limit)
     finally:
         cap.release()
-        cv2.destroyAllWindows()
         audio_thread.join()
         if os.path.exists(audio_path):
             os.remove(audio_path)
 
 # Example usage
 if __name__ == "__main__":
-    video_path = "sobana.mp4"  # replace with your video file
-    video_to_ascii(video_path, new_width=100, fps_limit=30)
+    video_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "video")
+    video_path = select_video_file(video_folder)
+    if video_path:
+        video_to_ascii(os.path.join(video_folder, video_path), new_width=100, fps_limit=30)
