@@ -60,8 +60,8 @@ A terminal-based Python application that converts videos to ASCII art and plays 
    - ASCII art and audio will play in your terminal.
 
 ## Credits
-- Author: ushanrashmika =23
-- GitHub: [github.com/ushanrashmika](https://github.com/ushanrashmika)
+- Author: ushanrashmika23
+- GitHub: [github.com/ushanrashmika23](https://github.com/ushanrashmika23)
 
 ## License
 MIT
