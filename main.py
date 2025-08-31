@@ -52,8 +52,8 @@ def select_video_file(folder):
         credits_box = [
             " " * 60,
             # "+----------------------------------------------------------+",
-            "| Credits: ushanrashmika =23                              ",
-            "| GitHub: github.com/ushanrashmika                        ",
+            "| Credits: ushanrashmika23                              ",
+            "| GitHub: github.com/ushanrashmika23                        ",
             # "+----------------------------------------------------------+",
             " " * 60
         ]
