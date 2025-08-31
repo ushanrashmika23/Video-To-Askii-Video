@@ -23,21 +23,30 @@ def select_video_file(folder):
         curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
         selected = 0
         instructions = [
-            "[ ASCII Video Player - Metasploit Style UI ]",
-            "─────────────────────────────────────────────",
+            " ASCII Video Player                       ",
+            "────────────────────────────────────────────────────────────",
             "Instructions:",
             "  ↑/↓ : Move selection",
             "  Enter: Play selected video",
             "  q    : Quit selector (or exit during playback)",
-            "─────────────────────────────────────────────",
+            # "─────────────────────────────────────────────",
+            "────────────────────────────────────────────────────────────",
             "Place your videos in the 'video' folder near the main.py.",
             ""
+        ]
+        credits_box = [
+            " " * 60,
+            # "+----------------------------------------------------------+",
+            "| Credits: ushanrashmika =23                              ",
+            "| GitHub: github.com/ushanrashmika                        ",
+            # "+----------------------------------------------------------+",
+            " " * 60
         ]
         while True:
             stdscr.clear()
             height, width = stdscr.getmaxyx()
             box_width = min(70, width-4)
-            box_height = min(len(files)+len(instructions)+6, height-4)
+            box_height = min(len(files)+len(instructions)+len(credits_box)+8, height-4)
             box_y = (height - box_height) // 2
             box_x = (width - box_width) // 2
             # Draw ASCII box border
@@ -48,9 +57,15 @@ def select_video_file(folder):
             # Title and instructions
             for idx, line in enumerate(instructions):
                 stdscr.addstr(box_y+1+idx, box_x+2, line, curses.color_pair(2) | curses.A_BOLD if idx==0 else curses.A_DIM)
+            # Credits box
+            for idx, line in enumerate(credits_box):
+                stdscr.addstr(box_y+1+len(instructions)+idx, box_x+2, line, curses.A_DIM)
+            # Video list title
+            video_list_y = box_y+1+len(instructions)+len(credits_box)
+            stdscr.addstr(video_list_y, box_x+2, "Video list:", curses.color_pair(2) | curses.A_BOLD)
             # File list
             for idx, fname in enumerate(files):
-                line_y = box_y+len(instructions)+2+idx
+                line_y = video_list_y+1+idx
                 if line_y >= box_y+box_height-2:
                     break
                 if idx == selected:
@@ -156,15 +171,10 @@ def video_to_ascii(video_path, new_width=100, fps_limit=30):
                 break
             ascii_art = frame_to_ascii(frame, new_width)
             os.system('cls' if os.name == 'nt' else 'clear')
-            # Add a 3-line exit banner at the bottom
+            # Only show ASCII art and a charming exit instruction
             ascii_lines = ascii_art.split('\n')
-            banner_width = new_width * 2
-            exit_banner = [
-                "=" * banner_width,
-                "||   PRESS 'q' TO EXIT PLAYBACK   ||".center(banner_width),
-                "=" * banner_width
-            ]
-            print("\n".join(ascii_lines + exit_banner))
+            exit_line = "\n\nPress 'q' to quit playback"
+            print("\n".join(ascii_lines) + exit_line)
             # Check for 'q' key press to exit
             if msvcrt.kbhit():
                 key = msvcrt.getch()
